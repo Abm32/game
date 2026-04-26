@@ -1,7 +1,7 @@
-'use strict';
-require('dotenv').config();
-const express = require('express');
-const path = require('path');
+"use strict";
+require("dotenv").config();
+const express = require("express");
+const path = require("path");
 
 const app = express();
 app.use(express.json());
@@ -9,33 +9,38 @@ app.use(express.json());
 // Serve the game HTML as a static file
 app.use(express.static(path.join(__dirname)));
 
+// Root route — serve the game directly at http://localhost:3001
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "code_runner_game.html"));
+});
+
 const API_KEY = process.env.ELEVENLABS_API_KEY;
 
 function missingKey(res) {
-  return res.status(500).json({ error: 'ELEVENLABS_API_KEY not set in .env' });
+  return res.status(500).json({ error: "ELEVENLABS_API_KEY not set in .env" });
 }
 
 // ── Proxy: Text-to-Speech ─────────────────────────────────────────
-app.post('/api/tts/:voiceId', async (req, res) => {
+app.post("/api/tts/:voiceId", async (req, res) => {
   if (!API_KEY) return missingKey(res);
   try {
     const upstream = await fetch(
       `https://api.elevenlabs.io/v1/text-to-speech/${req.params.voiceId}`,
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'xi-api-key': API_KEY,
-          'Content-Type': 'application/json',
+          "xi-api-key": API_KEY,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(req.body),
-      }
+      },
     );
     if (!upstream.ok) {
       const err = await upstream.json().catch(() => ({}));
       return res.status(upstream.status).json(err);
     }
     const arrayBuf = await upstream.arrayBuffer();
-    res.set('Content-Type', 'audio/mpeg');
+    res.set("Content-Type", "audio/mpeg");
     res.send(Buffer.from(arrayBuf));
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -43,26 +48,26 @@ app.post('/api/tts/:voiceId', async (req, res) => {
 });
 
 // ── Proxy: Sound Effects Generation ──────────────────────────────
-app.post('/api/sfx', async (req, res) => {
+app.post("/api/sfx", async (req, res) => {
   if (!API_KEY) return missingKey(res);
   try {
     const upstream = await fetch(
-      'https://api.elevenlabs.io/v1/sound-generation',
+      "https://api.elevenlabs.io/v1/sound-generation",
       {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'xi-api-key': API_KEY,
-          'Content-Type': 'application/json',
+          "xi-api-key": API_KEY,
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(req.body),
-      }
+      },
     );
     if (!upstream.ok) {
       const err = await upstream.json().catch(() => ({}));
       return res.status(upstream.status).json(err);
     }
     const arrayBuf = await upstream.arrayBuffer();
-    res.set('Content-Type', 'audio/mpeg');
+    res.set("Content-Type", "audio/mpeg");
     res.send(Buffer.from(arrayBuf));
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -72,5 +77,7 @@ app.post('/api/sfx', async (req, res) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`\n🎮 CODE RUNNER running at http://localhost:${PORT}`);
-  console.log(`   ElevenLabs key: ${API_KEY ? '✅ loaded from .env' : '❌ MISSING — add ELEVENLABS_API_KEY to .env'}\n`);
+  console.log(
+    `   ElevenLabs key: ${API_KEY ? "✅ loaded from .env" : "❌ MISSING — add ELEVENLABS_API_KEY to .env"}\n`,
+  );
 });
