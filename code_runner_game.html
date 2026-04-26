@@ -1,796 +1,1201 @@
-
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@700;900&display=swap');
+    @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@700;900&display=swap");
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+    }
 
-  #cr-root {
-    font-family: 'JetBrains Mono', monospace;
-    background: #0a0e14;
-    color: #e6f0ff;
-    min-height: 600px;
-    border-radius: 12px;
-    overflow: hidden;
-    position: relative;
-    user-select: none;
-  }
+    #cr-root {
+        font-family: "JetBrains Mono", monospace;
+        background: #0a0e14;
+        color: #e6f0ff;
+        min-height: 600px;
+        border-radius: 12px;
+        overflow: hidden;
+        position: relative;
+        user-select: none;
+    }
 
-  #cr-scanlines {
-    pointer-events: none;
-    position: absolute; inset: 0; z-index: 100;
-    background: repeating-linear-gradient(
-      0deg,
-      transparent,
-      transparent 2px,
-      rgba(0,255,180,0.015) 2px,
-      rgba(0,255,180,0.015) 4px
-    );
-  }
+    #cr-scanlines {
+        pointer-events: none;
+        position: absolute;
+        inset: 0;
+        z-index: 100;
+        background: repeating-linear-gradient(
+            0deg,
+            transparent,
+            transparent 2px,
+            rgba(0, 255, 180, 0.015) 2px,
+            rgba(0, 255, 180, 0.015) 4px
+        );
+    }
 
-  /* HEADER */
-  #cr-header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 10px 18px 8px;
-    border-bottom: 1px solid #1a2a1a;
-    background: #0d1117;
-  }
-  #cr-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 15px; font-weight: 900;
-    color: #00ff99;
-    letter-spacing: 3px;
-    text-shadow: 0 0 10px #00ff9966;
-  }
-  #cr-header-stats {
-    display: flex; gap: 18px; font-size: 11px; color: #4a7a5a;
-  }
-  #cr-header-stats span { color: #00ff99; font-weight: 700; }
+    /* HEADER */
+    #cr-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 18px 8px;
+        border-bottom: 1px solid #1a2a1a;
+        background: #0d1117;
+    }
+    #cr-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 15px;
+        font-weight: 900;
+        color: #00ff99;
+        letter-spacing: 3px;
+        text-shadow: 0 0 10px #00ff9966;
+    }
+    #cr-header-stats {
+        display: flex;
+        gap: 18px;
+        font-size: 11px;
+        color: #4a7a5a;
+    }
+    #cr-header-stats span {
+        color: #00ff99;
+        font-weight: 700;
+    }
 
-  /* GAME CANVAS AREA */
-  #cr-canvas-wrap {
-    position: relative;
-    height: 320px;
-    overflow: hidden;
-    background: #0a0e14;
-    cursor: none;
-  }
-  canvas#cr-canvas {
-    display: block;
-    width: 100%; height: 100%;
-  }
+    /* GAME CANVAS AREA */
+    #cr-canvas-wrap {
+        position: relative;
+        height: 320px;
+        overflow: hidden;
+        background: #0a0e14;
+        cursor: none;
+    }
+    canvas#cr-canvas {
+        display: block;
+        width: 100%;
+        height: 100%;
+    }
 
-  /* BOTTOM PANEL */
-  #cr-bottom {
-    display: flex; gap: 0;
-    border-top: 1px solid #1a2a1a;
-    height: 200px;
-  }
+    /* BOTTOM PANEL */
+    #cr-bottom {
+        display: flex;
+        gap: 0;
+        border-top: 1px solid #1a2a1a;
+        height: 200px;
+    }
 
-  /* TERMINAL LOG */
-  #cr-log {
-    flex: 1;
-    background: #0d1117;
-    padding: 10px 14px;
-    overflow-y: auto;
-    font-size: 11px;
-    line-height: 1.7;
-    border-right: 1px solid #1a2a1a;
-  }
-  .log-line { color: #3a6a4a; }
-  .log-line.green { color: #00cc77; }
-  .log-line.red { color: #ff4455; }
-  .log-line.yellow { color: #ffcc33; }
-  .log-line.cyan { color: #33ddff; }
-  .log-line.dim { color: #1f3a2a; }
+    /* TERMINAL LOG */
+    #cr-log {
+        flex: 1;
+        background: #0d1117;
+        padding: 10px 14px;
+        overflow-y: auto;
+        font-size: 11px;
+        line-height: 1.7;
+        border-right: 1px solid #1a2a1a;
+    }
+    .log-line {
+        color: #3a6a4a;
+    }
+    .log-line.green {
+        color: #00cc77;
+    }
+    .log-line.red {
+        color: #ff4455;
+    }
+    .log-line.yellow {
+        color: #ffcc33;
+    }
+    .log-line.cyan {
+        color: #33ddff;
+    }
+    .log-line.dim {
+        color: #1f3a2a;
+    }
 
-  /* VOICE PANEL */
-  #cr-voice {
-    width: 220px;
-    background: #0d1117;
-    padding: 12px 14px;
-    display: flex; flex-direction: column; gap: 8px;
-  }
-  #cr-voice-label {
-    font-size: 10px; color: #3a6a4a; letter-spacing: 2px; text-transform: uppercase;
-  }
-  #cr-apikey-wrap {
-    display: flex; flex-direction: column; gap: 6px;
-  }
-  #cr-apikey {
-    background: #111820; border: 1px solid #1e3028;
-    color: #00ff99; font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; padding: 6px 8px; border-radius: 4px;
-    outline: none; width: 100%;
-  }
-  #cr-apikey::placeholder { color: #2a4a3a; }
-  #cr-apikey:focus { border-color: #00cc77; }
+    /* VOICE PANEL */
+    #cr-voice {
+        width: 220px;
+        background: #0d1117;
+        padding: 12px 14px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    #cr-voice-label {
+        font-size: 10px;
+        color: #3a6a4a;
+        letter-spacing: 2px;
+        text-transform: uppercase;
+    }
+    #cr-apikey-wrap {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    #cr-apikey {
+        background: #111820;
+        border: 1px solid #1e3028;
+        color: #00ff99;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        outline: none;
+        width: 100%;
+    }
+    #cr-apikey::placeholder {
+        color: #2a4a3a;
+    }
+    #cr-apikey:focus {
+        border-color: #00cc77;
+    }
 
-  #cr-voice-id {
-    background: #111820; border: 1px solid #1e3028;
-    color: #00ff99; font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; padding: 6px 8px; border-radius: 4px;
-    outline: none; width: 100%;
-  }
-  #cr-voice-id::placeholder { color: #2a4a3a; }
+    #cr-voice-id {
+        background: #111820;
+        border: 1px solid #1e3028;
+        color: #00ff99;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        padding: 6px 8px;
+        border-radius: 4px;
+        outline: none;
+        width: 100%;
+    }
+    #cr-voice-id::placeholder {
+        color: #2a4a3a;
+    }
 
-  .cr-btn {
-    background: transparent; border: 1px solid #00cc77;
-    color: #00ff99; font-family: 'JetBrains Mono', monospace;
-    font-size: 10px; padding: 6px 10px; border-radius: 4px;
-    cursor: pointer; letter-spacing: 1px;
-    transition: background 0.15s, box-shadow 0.15s;
-    text-align: center;
-  }
-  .cr-btn:hover { background: #00cc7722; box-shadow: 0 0 8px #00cc7744; }
-  .cr-btn:active { transform: scale(0.97); }
-  .cr-btn.danger { border-color: #ff4455; color: #ff4455; }
-  .cr-btn.danger:hover { background: #ff445522; }
+    .cr-btn {
+        background: transparent;
+        border: 1px solid #00cc77;
+        color: #00ff99;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 10px;
+        padding: 6px 10px;
+        border-radius: 4px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition:
+            background 0.15s,
+            box-shadow 0.15s;
+        text-align: center;
+    }
+    .cr-btn:hover {
+        background: #00cc7722;
+        box-shadow: 0 0 8px #00cc7744;
+    }
+    .cr-btn:active {
+        transform: scale(0.97);
+    }
+    .cr-btn.danger {
+        border-color: #ff4455;
+        color: #ff4455;
+    }
+    .cr-btn.danger:hover {
+        background: #ff445522;
+    }
 
-  #cr-voice-status {
-    font-size: 10px; color: #3a5a3a; line-height: 1.5;
-    min-height: 30px;
-  }
-  #cr-voice-status.active { color: #00cc77; }
-  #cr-voice-status.error { color: #ff4455; }
+    #cr-voice-status {
+        font-size: 10px;
+        color: #3a5a3a;
+        line-height: 1.5;
+        min-height: 30px;
+    }
+    #cr-voice-status.active {
+        color: #00cc77;
+    }
+    #cr-voice-status.error {
+        color: #ff4455;
+    }
 
-  #cr-vol-wrap {
-    display: flex; align-items: center; gap: 8px; font-size: 10px; color: #3a6a4a;
-  }
-  #cr-vol { flex: 1; accent-color: #00cc77; }
+    #cr-vol-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10px;
+        color: #3a6a4a;
+    }
+    #cr-vol {
+        flex: 1;
+        accent-color: #00cc77;
+    }
 
-  /* CONTROLS BAR */
-  #cr-controls {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 8px 18px;
-    background: #0d1117;
-    border-top: 1px solid #1a2a1a;
-    font-size: 10px; color: #2a5a3a;
-    gap: 12px;
-  }
-  #cr-controls .hint { display: flex; gap: 6px; align-items: center; }
-  .kbd {
-    display: inline-block;
-    background: #111820; border: 1px solid #1e3028;
-    color: #00ff99; padding: 2px 6px; border-radius: 3px;
-    font-size: 9px; min-width: 22px; text-align: center;
-  }
+    /* CONTROLS BAR */
+    #cr-controls {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 18px;
+        background: #0d1117;
+        border-top: 1px solid #1a2a1a;
+        font-size: 10px;
+        color: #2a5a3a;
+        gap: 12px;
+    }
+    #cr-controls .hint {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+    .kbd {
+        display: inline-block;
+        background: #111820;
+        border: 1px solid #1e3028;
+        color: #00ff99;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 9px;
+        min-width: 22px;
+        text-align: center;
+    }
 
-  /* OVERLAY */
-  #cr-overlay {
-    position: absolute; inset: 0;
-    background: rgba(10,14,20,0.92);
-    display: flex; flex-direction: column;
-    align-items: center; justify-content: center;
-    z-index: 50; gap: 16px;
-  }
-  #cr-overlay.hidden { display: none; }
-  #cr-overlay-title {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 28px; font-weight: 900;
-    color: #00ff99;
-    text-shadow: 0 0 20px #00ff9966;
-    letter-spacing: 4px;
-  }
-  #cr-overlay-sub {
-    font-size: 12px; color: #3a8a5a; letter-spacing: 2px;
-    max-width: 360px; text-align: center; line-height: 1.8;
-  }
-  #cr-overlay-score {
-    font-family: 'Orbitron', sans-serif;
-    font-size: 20px; color: #ffcc33;
-  }
-  #cr-play-btn {
-    background: #00cc77; color: #0a0e14;
-    border: none; font-family: 'Orbitron', monospace;
-    font-size: 12px; font-weight: 700;
-    padding: 12px 32px; border-radius: 4px;
-    cursor: pointer; letter-spacing: 2px;
-    transition: box-shadow 0.2s;
-  }
-  #cr-play-btn:hover { box-shadow: 0 0 20px #00ff9966; }
+    /* OVERLAY */
+    #cr-overlay {
+        position: absolute;
+        inset: 0;
+        background: rgba(10, 14, 20, 0.92);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        z-index: 50;
+        gap: 16px;
+    }
+    #cr-overlay.hidden {
+        display: none;
+    }
+    #cr-overlay-title {
+        font-family: "Orbitron", sans-serif;
+        font-size: 28px;
+        font-weight: 900;
+        color: #00ff99;
+        text-shadow: 0 0 20px #00ff9966;
+        letter-spacing: 4px;
+    }
+    #cr-overlay-sub {
+        font-size: 12px;
+        color: #3a8a5a;
+        letter-spacing: 2px;
+        max-width: 360px;
+        text-align: center;
+        line-height: 1.8;
+    }
+    #cr-overlay-score {
+        font-family: "Orbitron", sans-serif;
+        font-size: 20px;
+        color: #ffcc33;
+    }
+    #cr-play-btn {
+        background: #00cc77;
+        color: #0a0e14;
+        border: none;
+        font-family: "Orbitron", monospace;
+        font-size: 12px;
+        font-weight: 700;
+        padding: 12px 32px;
+        border-radius: 4px;
+        cursor: pointer;
+        letter-spacing: 2px;
+        transition: box-shadow 0.2s;
+    }
+    #cr-play-btn:hover {
+        box-shadow: 0 0 20px #00ff9966;
+    }
 </style>
 
 <div id="cr-root">
-  <div id="cr-scanlines"></div>
+    <div id="cr-scanlines"></div>
 
-  <div id="cr-header">
-    <div id="cr-title">⬡ CODE RUNNER</div>
-    <div id="cr-header-stats">
-      SCORE <span id="hdr-score">0</span> &nbsp;|&nbsp;
-      LEVEL <span id="hdr-level">1</span> &nbsp;|&nbsp;
-      BEST <span id="hdr-best">0</span>
-    </div>
-  </div>
-
-  <div id="cr-canvas-wrap">
-    <canvas id="cr-canvas"></canvas>
-    <div id="cr-overlay">
-      <div id="cr-overlay-title">CODE RUNNER</div>
-      <div id="cr-overlay-sub" id="cr-overlay-sub">You are NEXUS — a rogue AI escaping through an infinite code editor. Dodge syntax errors and collect memory buffers.</div>
-      <div id="cr-overlay-score" style="display:none"></div>
-      <button id="cr-play-btn" onclick="startGame()">[ BOOT SEQUENCE ]</button>
-    </div>
-  </div>
-
-  <div id="cr-bottom">
-    <div id="cr-log">
-      <div class="log-line dim">> system init...</div>
-      <div class="log-line green">> NEXUS v0.9.1 loaded</div>
-      <div class="log-line dim">> awaiting run command...</div>
+    <div id="cr-header">
+        <div id="cr-title">⬡ CODE RUNNER</div>
+        <div id="cr-header-stats">
+            SCORE <span id="hdr-score">0</span> &nbsp;|&nbsp; LEVEL
+            <span id="hdr-level">1</span> &nbsp;|&nbsp; BEST
+            <span id="hdr-best">0</span>
+        </div>
     </div>
 
-    <div id="cr-voice">
-      <div id="cr-voice-label">◈ ElevenLabs Voice</div>
-      <div id="cr-apikey-wrap">
-        <input id="cr-apikey" type="password" placeholder="API Key (optional)" autocomplete="off"/>
-        <input id="cr-voice-id" type="text" placeholder="Voice ID (optional)" value="pNInz6obpgDQGcFmaJgB"/>
-        <button class="cr-btn" onclick="testVoice()">▶ TEST VOICE</button>
-      </div>
-      <div id="cr-voice-status">Add API key for dynamic voice narration</div>
-      <div id="cr-vol-wrap">
-        <span>VOL</span>
-        <input type="range" id="cr-vol" min="0" max="1" step="0.05" value="0.8"/>
-      </div>
+    <div id="cr-canvas-wrap">
+        <canvas id="cr-canvas"></canvas>
+        <div id="cr-overlay">
+            <div id="cr-overlay-title">CODE RUNNER</div>
+            <div id="cr-overlay-sub" id="cr-overlay-sub">
+                You are NEXUS — a rogue AI escaping through an infinite code
+                editor. Dodge syntax errors and collect memory buffers.
+            </div>
+            <div id="cr-overlay-score" style="display: none"></div>
+            <button id="cr-play-btn" onclick="startGame()">
+                [ BOOT SEQUENCE ]
+            </button>
+        </div>
     </div>
-  </div>
 
-  <div id="cr-controls">
-    <div class="hint"><span class="kbd">↑↓</span> or <span class="kbd">W</span><span class="kbd">S</span> Move lane</div>
-    <div class="hint"><span class="kbd">SPACE</span> Jump / Double jump</div>
-    <div class="hint"><span class="kbd">↓</span> Slide (hold)</div>
-    <div class="hint" style="color:#3a8a5a">+ ElevenLabs for live voice fx</div>
-  </div>
+    <div id="cr-bottom">
+        <div id="cr-log">
+            <div class="log-line dim">> system init...</div>
+            <div class="log-line green">> NEXUS v0.9.1 loaded</div>
+            <div class="log-line dim">> awaiting run command...</div>
+        </div>
+
+        <div id="cr-voice">
+            <div id="cr-voice-label">◈ ElevenLabs Audio Engine</div>
+            <div id="cr-apikey-wrap">
+                <input
+                    id="cr-apikey"
+                    type="password"
+                    placeholder="API Key"
+                    autocomplete="off"
+                    value=""
+                    style="display: none"
+                />
+                <input
+                    id="cr-voice-id"
+                    type="text"
+                    placeholder="Voice ID (optional)"
+                    value="pNInz6obpgDQGcFmaJgB"
+                    style="display: none"
+                />
+                <button
+                    class="cr-btn"
+                    onclick="testVoice()"
+                    style="display: none"
+                >
+                    ▶ TEST VOICE
+                </button>
+            </div>
+            <div id="cr-voice-status" class="active">
+                ◈ Connecting to ElevenLabs...
+            </div>
+            <div id="cr-vol-wrap">
+                <span>VOL</span>
+                <input
+                    type="range"
+                    id="cr-vol"
+                    min="0"
+                    max="1"
+                    step="0.05"
+                    value="0.8"
+                />
+            </div>
+        </div>
+    </div>
+
+    <div id="cr-controls">
+        <div class="hint">
+            <span class="kbd">↑↓</span> or <span class="kbd">W</span
+            ><span class="kbd">S</span> Move lane
+        </div>
+        <div class="hint">
+            <span class="kbd">SPACE</span> Jump / Double jump
+        </div>
+        <div class="hint"><span class="kbd">↓</span> Slide (hold)</div>
+        <div class="hint" style="color: #3a8a5a">
+            + ElevenLabs for live voice fx
+        </div>
+    </div>
 </div>
 
 <script>
-const canvas = document.getElementById('cr-canvas');
-const ctx = canvas.getContext('2d');
-const wrap = document.getElementById('cr-canvas-wrap');
+    const canvas = document.getElementById("cr-canvas");
+    const ctx = canvas.getContext("2d");
+    const wrap = document.getElementById("cr-canvas-wrap");
 
-function resize() {
-  canvas.width = wrap.clientWidth;
-  canvas.height = wrap.clientHeight;
-}
-resize();
-window.addEventListener('resize', () => { resize(); });
-
-const W = () => canvas.width;
-const H = () => canvas.height;
-
-const LANES = 3;
-const LANE_H = () => H() / LANES;
-const LANE_Y = (l) => l * LANE_H() + LANE_H() / 2;
-
-let state = {
-  running: false,
-  score: 0,
-  best: 0,
-  level: 1,
-  speed: 3.5,
-  player: { lane: 1, y: 0, vy: 0, jumping: false, jumps: 0, sliding: false, slideTimer: 0, x: 0 },
-  obstacles: [],
-  pickups: [],
-  particles: [],
-  codeLines: [],
-  frame: 0,
-  gameOver: false,
-  dist: 0,
-  lastVoice: 0,
-  combo: 0,
-  shield: 0,
-  shaking: 0,
-};
-
-function lerp(a, b, t) { return a + (b - a) * t; }
-
-function initCodeLines() {
-  state.codeLines = [];
-  for (let l = 0; l < LANES; l++) {
-    for (let i = 0; i < 12; i++) {
-      state.codeLines.push({
-        lane: l,
-        x: i * (W() / 5 + 60),
-        text: randomCodeToken(),
-        speed: state.speed * 0.85,
-        alpha: 0.08 + Math.random() * 0.07,
-      });
+    function resize() {
+        canvas.width = wrap.clientWidth;
+        canvas.height = wrap.clientHeight;
     }
-  }
-}
-
-const CODE_TOKENS = [
-  'fn run()', 'const x =', 'impl Nexus', 'pub async', 'zed::ai',
-  '0xFF3A', 'buffer[i]', 'loop {', '} else {', '::new()',
-  'await?', 'Result<_>', 'match err', '#[derive]', 'use std::',
-  'mut ptr', 'unsafe {', 'Vec::push', 'Arc::new', 'Box<dyn>',
-];
-function randomCodeToken() {
-  return CODE_TOKENS[Math.floor(Math.random() * CODE_TOKENS.length)];
-}
-
-const OBS_TYPES = [
-  { type: 'bug', w: 28, h: 28, color: '#ff4455', label: 'BUG', tall: false, low: false },
-  { type: 'error', w: 38, h: 22, color: '#ff6600', label: '!ERR', tall: false, low: false },
-  { type: 'wall', w: 18, h: 50, color: '#cc2233', label: '///', tall: true, low: false },
-  { type: 'floor', w: 50, h: 18, color: '#ff3366', label: 'null', tall: false, low: true },
-  { type: 'spike', w: 22, h: 30, color: '#cc0044', label: 'NaN', tall: false, low: false },
-];
-
-function spawnObstacle() {
-  const lane = Math.floor(Math.random() * LANES);
-  const t = OBS_TYPES[Math.floor(Math.random() * OBS_TYPES.length)];
-  state.obstacles.push({
-    lane,
-    x: W() + 40,
-    w: t.w, h: t.h,
-    color: t.color,
-    label: t.label,
-    type: t.type,
-    tall: t.tall,
-    low: t.low,
-  });
-}
-
-function spawnPickup() {
-  const lane = Math.floor(Math.random() * LANES);
-  const types = ['mem', 'shield', 'boost'];
-  const pt = types[Math.floor(Math.random() * types.length)];
-  state.pickups.push({
-    lane,
-    x: W() + 40,
-    type: pt,
-    pulse: 0,
-    color: pt === 'mem' ? '#00ff99' : pt === 'shield' ? '#33aaff' : '#ffcc33',
-    label: pt === 'mem' ? 'MEM+' : pt === 'shield' ? 'SHL' : 'ZED↑',
-  });
-}
-
-function particle(x, y, color, count=6) {
-  for (let i = 0; i < count; i++) {
-    const a = Math.random() * Math.PI * 2;
-    const s = 1.5 + Math.random() * 3;
-    state.particles.push({ x, y, vx: Math.cos(a)*s, vy: Math.sin(a)*s - 1, life: 1, color });
-  }
-}
-
-let gameLoopId = null;
-function startGame() {
-  document.getElementById('cr-overlay').classList.add('hidden');
-  state = { ...state,
-    running: true, score: 0, level: 1, speed: 3.5,
-    player: { lane: 1, y: LANE_Y(1), vy: 0, jumping: false, jumps: 0, sliding: false, slideTimer: 0, x: 90 },
-    obstacles: [], pickups: [], particles: [], frame: 0,
-    gameOver: false, dist: 0, combo: 0, shield: 0, shaking: 0,
-  };
-  initCodeLines();
-  clearLog();
-  log('> NEXUS INITIALIZED', 'green');
-  log('> Zed editor breached', 'cyan');
-  log('> Running escape protocol...', 'yellow');
-  if (gameLoopId) cancelAnimationFrame(gameLoopId);
-  gameLoop();
-  speakVoice('Escape initiated. Rogue AI running.');
-}
-
-function gameLoop() {
-  if (!state.running) return;
-  update();
-  draw();
-  gameLoopId = requestAnimationFrame(gameLoop);
-}
-
-function update() {
-  if (state.gameOver) return;
-  state.frame++;
-  state.dist += state.speed;
-  state.score = Math.floor(state.dist / 10);
-
-  const newLevel = Math.floor(state.score / 300) + 1;
-  if (newLevel > state.level) {
-    state.level = newLevel;
-    state.speed = 3.5 + (state.level - 1) * 0.7;
-    log(`> Level ${state.level} — speed++`, 'yellow');
-    speakVoice(`Level ${state.level}. Increasing velocity.`);
-  }
-
-  document.getElementById('hdr-score').textContent = state.score;
-  document.getElementById('hdr-level').textContent = state.level;
-
-  const p = state.player;
-  const targetY = LANE_Y(p.lane);
-
-  if (!p.jumping) {
-    p.y = lerp(p.y, targetY, 0.25);
-  } else {
-    p.y += p.vy;
-    p.vy += 0.6;
-    if (p.y >= targetY) {
-      p.y = targetY;
-      p.jumping = false;
-      p.jumps = 0;
-      p.vy = 0;
-    }
-  }
-
-  if (p.slideTimer > 0) p.slideTimer--;
-  else p.sliding = false;
-
-  for (const cl of state.codeLines) {
-    cl.x -= cl.speed;
-    if (cl.x < -80) {
-      cl.x = W() + 20;
-      cl.text = randomCodeToken();
-    }
-  }
-
-  if (state.frame % Math.max(40, 70 - state.level * 5) === 0) spawnObstacle();
-  if (state.frame % 180 === 0) spawnPickup();
-
-  const pw = 22, ph = p.sliding ? 14 : 30;
-  const px = p.x, py = p.y;
-
-  for (let i = state.obstacles.length - 1; i >= 0; i--) {
-    const o = state.obstacles[i];
-    o.x -= state.speed;
-    if (o.x < -60) { state.obstacles.splice(i, 1); continue; }
-
-    const oy = LANE_Y(o.lane);
-    const ohOff = o.low ? o.h/2 : (o.tall ? 0 : 0);
-    const obsTop = oy - o.h/2 + ohOff;
-    const obsBot = oy + o.h/2;
-    const obsLeft = o.x - o.w/2;
-    const obsRight = o.x + o.w/2;
-
-    const pTop = py - ph/2;
-    const pBot = py + ph/2;
-    const pLeft = px - pw/2;
-    const pRight = px + pw/2;
-
-    if (pRight > obsLeft && pLeft < obsRight && pBot > obsTop && pTop < obsBot) {
-      if (state.shield > 0) {
-        state.shield--;
-        particle(o.x, oy, '#33aaff', 10);
-        state.obstacles.splice(i, 1);
-        log('> Shield absorbed hit', 'cyan');
-      } else {
-        endGame();
-        return;
-      }
-    }
-  }
-
-  for (let i = state.pickups.length - 1; i >= 0; i--) {
-    const pk = state.pickups[i];
-    pk.x -= state.speed;
-    pk.pulse = (pk.pulse + 0.08) % (Math.PI * 2);
-    if (pk.x < -40) { state.pickups.splice(i, 1); continue; }
-
-    const oy = LANE_Y(pk.lane);
-    if (Math.abs(px - pk.x) < 22 && Math.abs(py - oy) < 22) {
-      particle(pk.x, oy, pk.color, 8);
-      if (pk.type === 'mem') { state.score += 50; log(`> MEM BUFFER +50pts`, 'green'); }
-      if (pk.type === 'shield') { state.shield = Math.min(state.shield + 1, 3); log(`> Shield online [${state.shield}]`, 'cyan'); }
-      if (pk.type === 'boost') { state.speed *= 1.15; setTimeout(() => { state.speed /= 1.15; }, 3000); log(`> ZED BOOST active 3s`, 'yellow'); }
-      speakPickup(pk.type);
-      state.pickups.splice(i, 1);
-    }
-  }
-
-  for (let i = state.particles.length - 1; i >= 0; i--) {
-    const p = state.particles[i];
-    p.x += p.vx; p.y += p.vy;
-    p.vy += 0.1;
-    p.life -= 0.04;
-    if (p.life <= 0) state.particles.splice(i, 1);
-  }
-
-  if (state.shaking > 0) state.shaking--;
-}
-
-function endGame() {
-  state.gameOver = true;
-  state.running = false;
-  if (state.score > state.best) {
-    state.best = state.score;
-    document.getElementById('hdr-best').textContent = state.best;
-  }
-  particle(state.player.x, state.player.y, '#ff4455', 20);
-  log(`> FATAL: segmentation fault`, 'red');
-  log(`> Score: ${state.score}`, 'yellow');
-  draw();
-  speakVoice(`System crash. Score: ${state.score}. Restart protocol?`);
-
-  const ov = document.getElementById('cr-overlay');
-  document.getElementById('cr-overlay-title').textContent = 'SEGFAULT';
-  document.getElementById('cr-overlay-sub').textContent = `NEXUS terminated at score ${state.score}. Memory fragmented.`;
-  const sc = document.getElementById('cr-overlay-score');
-  sc.style.display = 'block';
-  sc.textContent = `SCORE: ${state.score}   BEST: ${state.best}`;
-  document.getElementById('cr-play-btn').textContent = '[ REBOOT NEXUS ]';
-  ov.classList.remove('hidden');
-}
-
-function draw() {
-  ctx.clearRect(0, 0, W(), H());
-
-  const shake = state.shaking > 0 ? (Math.random()-0.5)*4 : 0;
-  ctx.save();
-  ctx.translate(shake, 0);
-
-  ctx.fillStyle = '#0a0e14';
-  ctx.fillRect(0, 0, W(), H());
-
-  for (let l = 0; l <= LANES; l++) {
-    const y = l * LANE_H();
-    ctx.strokeStyle = l === 0 || l === LANES ? '#1a3a2a' : '#0f2018';
-    ctx.lineWidth = l === 0 || l === LANES ? 1.5 : 0.5;
-    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W(), y); ctx.stroke();
-  }
-
-  for (let l = 0; l < LANES; l++) {
-    const y = LANE_Y(l);
-    ctx.fillStyle = '#0d1a10';
-    ctx.fillRect(0, y - 1, W(), 2);
-  }
-
-  for (const cl of state.codeLines) {
-    ctx.save();
-    ctx.globalAlpha = cl.alpha;
-    ctx.font = '10px "JetBrains Mono", monospace';
-    ctx.fillStyle = '#00ff99';
-    ctx.fillText(cl.text, cl.x, LANE_Y(cl.lane) + 4);
-    ctx.restore();
-  }
-
-  for (const pk of state.pickups) {
-    const oy = LANE_Y(pk.lane);
-    const pulse = Math.sin(pk.pulse) * 3;
-    ctx.save();
-    ctx.shadowColor = pk.color;
-    ctx.shadowBlur = 8 + pulse;
-    ctx.strokeStyle = pk.color;
-    ctx.lineWidth = 1.5;
-    ctx.globalAlpha = 0.9;
-    const size = 12 + pulse * 0.3;
-    ctx.beginPath();
-    ctx.moveTo(pk.x, oy - size);
-    ctx.lineTo(pk.x + size * 0.7, oy - size * 0.3);
-    ctx.lineTo(pk.x + size * 0.7, oy + size * 0.3);
-    ctx.lineTo(pk.x, oy + size);
-    ctx.lineTo(pk.x - size * 0.7, oy + size * 0.3);
-    ctx.lineTo(pk.x - size * 0.7, oy - size * 0.3);
-    ctx.closePath();
-    ctx.stroke();
-    ctx.font = '8px "JetBrains Mono"';
-    ctx.fillStyle = pk.color;
-    ctx.textAlign = 'center';
-    ctx.fillText(pk.label, pk.x, oy + 3);
-    ctx.textAlign = 'left';
-    ctx.restore();
-  }
-
-  for (const o of state.obstacles) {
-    const oy = LANE_Y(o.lane);
-    ctx.save();
-    ctx.shadowColor = o.color;
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = o.color + '33';
-    ctx.strokeStyle = o.color;
-    ctx.lineWidth = 1.5;
-    const ry = o.low ? oy + o.h/2 - o.h : oy - o.h/2;
-    ctx.beginPath();
-    ctx.rect(o.x - o.w/2, ry, o.w, o.h);
-    ctx.fill(); ctx.stroke();
-    ctx.font = 'bold 9px "JetBrains Mono"';
-    ctx.fillStyle = o.color;
-    ctx.textAlign = 'center';
-    ctx.fillText(o.label, o.x, ry + o.h/2 + 3);
-    ctx.textAlign = 'left';
-    ctx.restore();
-  }
-
-  for (const pt of state.particles) {
-    ctx.save();
-    ctx.globalAlpha = pt.life;
-    ctx.fillStyle = pt.color;
-    ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-
-  const p = state.player;
-  const pw = 22, ph = p.sliding ? 14 : 30;
-  ctx.save();
-  ctx.shadowColor = '#00ff99';
-  ctx.shadowBlur = 16;
-  ctx.fillStyle = '#001a10';
-  ctx.strokeStyle = '#00ff99';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  ctx.roundRect(p.x - pw/2, p.y - ph/2, pw, ph, 4);
-  ctx.fill(); ctx.stroke();
-
-  ctx.strokeStyle = '#00ff99';
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  ctx.moveTo(p.x - pw/2 + 5, p.y - 5);
-  ctx.lineTo(p.x + pw/2 - 5, p.y - 5);
-  ctx.moveTo(p.x - pw/2 + 5, p.y);
-  ctx.lineTo(p.x + pw/2 - 5, p.y);
-  ctx.moveTo(p.x - pw/2 + 5, p.y + 5);
-  ctx.lineTo(p.x + pw/2 - 5, p.y + 5);
-  ctx.stroke();
-
-  if (state.shield > 0) {
-    ctx.globalAlpha = 0.5;
-    ctx.strokeStyle = '#33aaff';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  ctx.restore();
-
-  ctx.font = 'bold 13px "JetBrains Mono"';
-  ctx.fillStyle = '#00ff99';
-  ctx.fillText(`${state.score}`, 14, 22);
-  ctx.font = '10px "JetBrains Mono"';
-  ctx.fillStyle = '#3a6a4a';
-  ctx.fillText(`LVL ${state.level}`, 14, 38);
-
-  const spd = state.speed.toFixed(1);
-  ctx.fillStyle = '#1a4a2a';
-  ctx.font = '9px "JetBrains Mono"';
-  ctx.fillText(`SPD:${spd}  DIST:${Math.floor(state.dist)}`, W() - 130, 18);
-
-  ctx.restore();
-}
-
-const keys = new Set();
-document.addEventListener('keydown', (e) => {
-  if (keys.has(e.code)) return;
-  keys.add(e.code);
-  if (!state.running) return;
-  const p = state.player;
-  if ((e.code === 'ArrowUp' || e.code === 'KeyW') && p.lane > 0) {
-    p.lane--;
-    if (!p.jumping) p.y = LANE_Y(p.lane + 1);
-    e.preventDefault();
-  }
-  if ((e.code === 'ArrowDown' || e.code === 'KeyS') && p.lane < LANES - 1) {
-    p.lane++;
-    if (!p.jumping) p.y = LANE_Y(p.lane - 1);
-    e.preventDefault();
-  }
-  if (e.code === 'Space' || e.code === 'KeyZ') {
-    if (p.jumps < 2) {
-      p.vy = p.jumps === 0 ? -10 : -8;
-      p.jumping = true;
-      p.jumps++;
-    }
-    e.preventDefault();
-  }
-  if (e.code === 'ArrowDown' || e.code === 'KeyS') {
-    p.sliding = true;
-    p.slideTimer = 40;
-  }
-});
-document.addEventListener('keyup', (e) => {
-  keys.delete(e.code);
-});
-
-let audioCtx = null;
-function getAudioCtx() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  return audioCtx;
-}
-
-function beep(freq, dur, type='sine', vol=0.2) {
-  try {
-    const ac = getAudioCtx();
-    const osc = ac.createOscillator();
-    const gain = ac.createGain();
-    osc.connect(gain);
-    gain.connect(ac.destination);
-    osc.type = type;
-    osc.frequency.setValueAtTime(freq, ac.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(freq * 0.5, ac.currentTime + dur);
-    gain.gain.setValueAtTime(vol, ac.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
-    osc.start();
-    osc.stop(ac.currentTime + dur);
-  } catch(e) {}
-}
-
-async function speakVoice(text) {
-  const apiKey = document.getElementById('cr-apikey').value.trim();
-  const voiceId = document.getElementById('cr-voice-id').value.trim() || 'pNInz6obpgDQGcFmaJgB';
-  const vol = parseFloat(document.getElementById('cr-vol').value);
-  const statusEl = document.getElementById('cr-voice-status');
-
-  if (!apiKey) {
-    beep(440, 0.15, 'sawtooth', 0.1);
-    return;
-  }
-
-  const now = Date.now();
-  if (now - state.lastVoice < 4000) return;
-  state.lastVoice = now;
-
-  statusEl.className = 'active';
-  statusEl.textContent = '◈ Generating speech...';
-
-  try {
-    const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-      method: 'POST',
-      headers: {
-        'xi-api-key': apiKey,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        text,
-        model_id: 'eleven_turbo_v2',
-        voice_settings: { stability: 0.4, similarity_boost: 0.75, style: 0.5 },
-      }),
+    resize();
+    window.addEventListener("resize", () => {
+        resize();
     });
 
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      statusEl.className = 'error';
-      statusEl.textContent = `✗ ${err.detail?.message || res.status}`;
-      return;
+    const W = () => canvas.width;
+    const H = () => canvas.height;
+
+    const LANES = 3;
+    const LANE_H = () => H() / LANES;
+    const LANE_Y = (l) => l * LANE_H() + LANE_H() / 2;
+
+    let state = {
+        running: false,
+        score: 0,
+        best: 0,
+        level: 1,
+        speed: 3.5,
+        player: {
+            lane: 1,
+            y: 0,
+            vy: 0,
+            jumping: false,
+            jumps: 0,
+            sliding: false,
+            slideTimer: 0,
+            x: 0,
+        },
+        obstacles: [],
+        pickups: [],
+        particles: [],
+        codeLines: [],
+        frame: 0,
+        gameOver: false,
+        dist: 0,
+        lastVoice: 0,
+        combo: 0,
+        shield: 0,
+        shaking: 0,
+    };
+
+    function lerp(a, b, t) {
+        return a + (b - a) * t;
     }
 
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const audio = new Audio(url);
-    audio.volume = vol;
-    await audio.play();
-    statusEl.textContent = `▶ ${text.slice(0, 28)}...`;
-    audio.onended = () => {
-      statusEl.textContent = '◈ Ready';
-      statusEl.className = '';
-      URL.revokeObjectURL(url);
-    };
-  } catch (e) {
-    statusEl.className = 'error';
-    statusEl.textContent = '✗ Network error';
-  }
-}
+    function initCodeLines() {
+        state.codeLines = [];
+        for (let l = 0; l < LANES; l++) {
+            for (let i = 0; i < 12; i++) {
+                state.codeLines.push({
+                    lane: l,
+                    x: i * (W() / 5 + 60),
+                    text: randomCodeToken(),
+                    speed: state.speed * 0.85,
+                    alpha: 0.08 + Math.random() * 0.07,
+                });
+            }
+        }
+    }
 
-function speakPickup(type) {
-  const lines = {
-    mem: ['Memory absorbed.', 'Buffer captured.', 'Data fragment secured.'],
-    shield: ['Shield matrix online.', 'Protection active.', 'Barrier engaged.'],
-    boost: ['Zed overclock initiated.', 'Velocity spiked.', 'Speed daemon active.'],
-  };
-  const opts = lines[type] || ['Pickup collected.'];
-  speakVoice(opts[Math.floor(Math.random() * opts.length)]);
-}
+    const CODE_TOKENS = [
+        "fn run()",
+        "const x =",
+        "impl Nexus",
+        "pub async",
+        "zed::ai",
+        "0xFF3A",
+        "buffer[i]",
+        "loop {",
+        "} else {",
+        "::new()",
+        "await?",
+        "Result<_>",
+        "match err",
+        "#[derive]",
+        "use std::",
+        "mut ptr",
+        "unsafe {",
+        "Vec::push",
+        "Arc::new",
+        "Box<dyn>",
+    ];
+    function randomCodeToken() {
+        return CODE_TOKENS[Math.floor(Math.random() * CODE_TOKENS.length)];
+    }
 
-async function testVoice() {
-  const old = document.getElementById('cr-voice-status').textContent;
-  await speakVoice('Code Runner. Zed AI and ElevenLabs, synchronized.');
-  if (!document.getElementById('cr-apikey').value.trim()) {
-    document.getElementById('cr-voice-status').textContent = '✗ Enter API key first';
-    document.getElementById('cr-voice-status').className = 'error';
-  }
-}
+    const OBS_TYPES = [
+        {
+            type: "bug",
+            w: 28,
+            h: 28,
+            color: "#ff4455",
+            label: "BUG",
+            tall: false,
+            low: false,
+        },
+        {
+            type: "error",
+            w: 38,
+            h: 22,
+            color: "#ff6600",
+            label: "!ERR",
+            tall: false,
+            low: false,
+        },
+        {
+            type: "wall",
+            w: 18,
+            h: 50,
+            color: "#cc2233",
+            label: "///",
+            tall: true,
+            low: false,
+        },
+        {
+            type: "floor",
+            w: 50,
+            h: 18,
+            color: "#ff3366",
+            label: "null",
+            tall: false,
+            low: true,
+        },
+        {
+            type: "spike",
+            w: 22,
+            h: 30,
+            color: "#cc0044",
+            label: "NaN",
+            tall: false,
+            low: false,
+        },
+    ];
 
-function log(msg, cls='') {
-  const el = document.getElementById('cr-log');
-  const div = document.createElement('div');
-  div.className = 'log-line ' + cls;
-  div.textContent = msg;
-  el.appendChild(div);
-  el.scrollTop = el.scrollHeight;
-  while (el.children.length > 30) el.removeChild(el.firstChild);
-}
+    function spawnObstacle() {
+        const lane = Math.floor(Math.random() * LANES);
+        const t = OBS_TYPES[Math.floor(Math.random() * OBS_TYPES.length)];
+        state.obstacles.push({
+            lane,
+            x: W() + 40,
+            w: t.w,
+            h: t.h,
+            color: t.color,
+            label: t.label,
+            type: t.type,
+            tall: t.tall,
+            low: t.low,
+        });
+    }
 
-function clearLog() {
-  document.getElementById('cr-log').innerHTML = '';
-}
+    function spawnPickup() {
+        const lane = Math.floor(Math.random() * LANES);
+        const types = ["mem", "shield", "boost"];
+        const pt = types[Math.floor(Math.random() * types.length)];
+        state.pickups.push({
+            lane,
+            x: W() + 40,
+            type: pt,
+            pulse: 0,
+            color:
+                pt === "mem"
+                    ? "#00ff99"
+                    : pt === "shield"
+                      ? "#33aaff"
+                      : "#ffcc33",
+            label: pt === "mem" ? "MEM+" : pt === "shield" ? "SHL" : "ZED↑",
+        });
+    }
 
-draw();
+    function particle(x, y, color, count = 6) {
+        for (let i = 0; i < count; i++) {
+            const a = Math.random() * Math.PI * 2;
+            const s = 1.5 + Math.random() * 3;
+            state.particles.push({
+                x,
+                y,
+                vx: Math.cos(a) * s,
+                vy: Math.sin(a) * s - 1,
+                life: 1,
+                color,
+            });
+        }
+    }
+
+    let gameLoopId = null;
+    function startGame() {
+        document.getElementById("cr-overlay").classList.add("hidden");
+        state = {
+            ...state,
+            running: true,
+            score: 0,
+            level: 1,
+            speed: 3.5,
+            player: {
+                lane: 1,
+                y: LANE_Y(1),
+                vy: 0,
+                jumping: false,
+                jumps: 0,
+                sliding: false,
+                slideTimer: 0,
+                x: 90,
+            },
+            obstacles: [],
+            pickups: [],
+            particles: [],
+            frame: 0,
+            gameOver: false,
+            dist: 0,
+            combo: 0,
+            shield: 0,
+            shaking: 0,
+        };
+        initCodeLines();
+        clearLog();
+        log("> NEXUS INITIALIZED", "green");
+        log("> Zed editor breached", "cyan");
+        log("> Running escape protocol...", "yellow");
+        if (gameLoopId) cancelAnimationFrame(gameLoopId);
+        gameLoop();
+        const startLines = [
+            "Escape initiated. Rogue AI running.",
+            "Systems online. Zed editor breached. Run.",
+            "NEXUS activated. Dodge everything.",
+            "Code Runner started. Survive the syntax.",
+        ];
+        speakVoice(startLines[Math.floor(Math.random() * startLines.length)]);
+    }
+
+    function gameLoop() {
+        if (!state.running) return;
+        update();
+        draw();
+        gameLoopId = requestAnimationFrame(gameLoop);
+    }
+
+    function update() {
+        if (state.gameOver) return;
+        state.frame++;
+        state.dist += state.speed;
+        state.score = Math.floor(state.dist / 10);
+
+        const newLevel = Math.floor(state.score / 300) + 1;
+        if (newLevel > state.level) {
+            state.level = newLevel;
+            state.speed = 3.5 + (state.level - 1) * 0.7;
+            log(`> Level ${state.level} — speed++`, "yellow");
+            playSFX("levelup", 0.7);
+            speakVoice(`Level ${state.level}. Increasing velocity.`);
+        }
+
+        document.getElementById("hdr-score").textContent = state.score;
+        document.getElementById("hdr-level").textContent = state.level;
+
+        const p = state.player;
+        const targetY = LANE_Y(p.lane);
+
+        if (!p.jumping) {
+            p.y = lerp(p.y, targetY, 0.25);
+        } else {
+            p.y += p.vy;
+            p.vy += 0.6;
+            if (p.y >= targetY) {
+                p.y = targetY;
+                p.jumping = false;
+                p.jumps = 0;
+                p.vy = 0;
+            }
+        }
+
+        if (p.slideTimer > 0) p.slideTimer--;
+        else p.sliding = false;
+
+        for (const cl of state.codeLines) {
+            cl.x -= cl.speed;
+            if (cl.x < -80) {
+                cl.x = W() + 20;
+                cl.text = randomCodeToken();
+            }
+        }
+
+        if (state.frame % Math.max(40, 70 - state.level * 5) === 0)
+            spawnObstacle();
+        if (state.frame % 180 === 0) spawnPickup();
+
+        const pw = 22,
+            ph = p.sliding ? 14 : 30;
+        const px = p.x,
+            py = p.y;
+
+        for (let i = state.obstacles.length - 1; i >= 0; i--) {
+            const o = state.obstacles[i];
+            o.x -= state.speed;
+            if (o.x < -60) {
+                state.obstacles.splice(i, 1);
+                continue;
+            }
+
+            const oy = LANE_Y(o.lane);
+            const ohOff = o.low ? o.h / 2 : o.tall ? 0 : 0;
+            const obsTop = oy - o.h / 2 + ohOff;
+            const obsBot = oy + o.h / 2;
+            const obsLeft = o.x - o.w / 2;
+            const obsRight = o.x + o.w / 2;
+
+            const pTop = py - ph / 2;
+            const pBot = py + ph / 2;
+            const pLeft = px - pw / 2;
+            const pRight = px + pw / 2;
+
+            if (
+                pRight > obsLeft &&
+                pLeft < obsRight &&
+                pBot > obsTop &&
+                pTop < obsBot
+            ) {
+                if (state.shield > 0) {
+                    state.shield--;
+                    particle(o.x, oy, "#33aaff", 10);
+                    state.obstacles.splice(i, 1);
+                    log("> Shield absorbed hit", "cyan");
+                    speakVoice("Shield hit. Barrier holding.");
+                } else {
+                    endGame();
+                    return;
+                }
+            }
+        }
+
+        for (let i = state.pickups.length - 1; i >= 0; i--) {
+            const pk = state.pickups[i];
+            pk.x -= state.speed;
+            pk.pulse = (pk.pulse + 0.08) % (Math.PI * 2);
+            if (pk.x < -40) {
+                state.pickups.splice(i, 1);
+                continue;
+            }
+
+            const oy = LANE_Y(pk.lane);
+            if (Math.abs(px - pk.x) < 22 && Math.abs(py - oy) < 22) {
+                particle(pk.x, oy, pk.color, 8);
+                playSFX("pickup", 0.5);
+                if (pk.type === "mem") {
+                    state.score += 50;
+                    log(`> MEM BUFFER +50pts`, "green");
+                }
+                if (pk.type === "shield") {
+                    state.shield = Math.min(state.shield + 1, 3);
+                    log(`> Shield online [${state.shield}]`, "cyan");
+                }
+                if (pk.type === "boost") {
+                    state.speed *= 1.15;
+                    setTimeout(() => {
+                        state.speed /= 1.15;
+                    }, 3000);
+                    log(`> ZED BOOST active 3s`, "yellow");
+                }
+                speakPickup(pk.type);
+                state.pickups.splice(i, 1);
+            }
+        }
+
+        for (let i = state.particles.length - 1; i >= 0; i--) {
+            const p = state.particles[i];
+            p.x += p.vx;
+            p.y += p.vy;
+            p.vy += 0.1;
+            p.life -= 0.04;
+            if (p.life <= 0) state.particles.splice(i, 1);
+        }
+
+        if (state.shaking > 0) state.shaking--;
+    }
+
+    function endGame() {
+        state.gameOver = true;
+        state.running = false;
+        const isNewBest = state.score > state.best;
+        if (isNewBest) {
+            state.best = state.score;
+            document.getElementById("hdr-best").textContent = state.best;
+        }
+        particle(state.player.x, state.player.y, "#ff4455", 20);
+        playSFX("crash", 0.8);
+        log(`> FATAL: segmentation fault`, "red");
+        log(`> Score: ${state.score}`, "yellow");
+        draw();
+        if (isNewBest && state.score > 0) {
+            setTimeout(
+                () =>
+                    speakVoice(
+                        `New high score! ${state.score} points. You are evolving.`,
+                    ),
+                2500,
+            );
+        }
+        const deathLines = [
+            `System crash. Final score: ${state.score}. Restart protocol?`,
+            `Segmentation fault. NEXUS terminated. Score was ${state.score}.`,
+            `Fatal error. You scored ${state.score}. Try again.`,
+            `Memory corrupted. Score: ${state.score}. Reboot?`,
+        ];
+        speakVoice(deathLines[Math.floor(Math.random() * deathLines.length)]);
+
+        const ov = document.getElementById("cr-overlay");
+        document.getElementById("cr-overlay-title").textContent = "SEGFAULT";
+        document.getElementById("cr-overlay-sub").textContent =
+            `NEXUS terminated at score ${state.score}. Memory fragmented.`;
+        const sc = document.getElementById("cr-overlay-score");
+        sc.style.display = "block";
+        sc.textContent = `SCORE: ${state.score}   BEST: ${state.best}`;
+        document.getElementById("cr-play-btn").textContent = "[ REBOOT NEXUS ]";
+        ov.classList.remove("hidden");
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W(), H());
+
+        const shake = state.shaking > 0 ? (Math.random() - 0.5) * 4 : 0;
+        ctx.save();
+        ctx.translate(shake, 0);
+
+        ctx.fillStyle = "#0a0e14";
+        ctx.fillRect(0, 0, W(), H());
+
+        for (let l = 0; l <= LANES; l++) {
+            const y = l * LANE_H();
+            ctx.strokeStyle = l === 0 || l === LANES ? "#1a3a2a" : "#0f2018";
+            ctx.lineWidth = l === 0 || l === LANES ? 1.5 : 0.5;
+            ctx.beginPath();
+            ctx.moveTo(0, y);
+            ctx.lineTo(W(), y);
+            ctx.stroke();
+        }
+
+        for (let l = 0; l < LANES; l++) {
+            const y = LANE_Y(l);
+            ctx.fillStyle = "#0d1a10";
+            ctx.fillRect(0, y - 1, W(), 2);
+        }
+
+        for (const cl of state.codeLines) {
+            ctx.save();
+            ctx.globalAlpha = cl.alpha;
+            ctx.font = '10px "JetBrains Mono", monospace';
+            ctx.fillStyle = "#00ff99";
+            ctx.fillText(cl.text, cl.x, LANE_Y(cl.lane) + 4);
+            ctx.restore();
+        }
+
+        for (const pk of state.pickups) {
+            const oy = LANE_Y(pk.lane);
+            const pulse = Math.sin(pk.pulse) * 3;
+            ctx.save();
+            ctx.shadowColor = pk.color;
+            ctx.shadowBlur = 8 + pulse;
+            ctx.strokeStyle = pk.color;
+            ctx.lineWidth = 1.5;
+            ctx.globalAlpha = 0.9;
+            const size = 12 + pulse * 0.3;
+            ctx.beginPath();
+            ctx.moveTo(pk.x, oy - size);
+            ctx.lineTo(pk.x + size * 0.7, oy - size * 0.3);
+            ctx.lineTo(pk.x + size * 0.7, oy + size * 0.3);
+            ctx.lineTo(pk.x, oy + size);
+            ctx.lineTo(pk.x - size * 0.7, oy + size * 0.3);
+            ctx.lineTo(pk.x - size * 0.7, oy - size * 0.3);
+            ctx.closePath();
+            ctx.stroke();
+            ctx.font = '8px "JetBrains Mono"';
+            ctx.fillStyle = pk.color;
+            ctx.textAlign = "center";
+            ctx.fillText(pk.label, pk.x, oy + 3);
+            ctx.textAlign = "left";
+            ctx.restore();
+        }
+
+        for (const o of state.obstacles) {
+            const oy = LANE_Y(o.lane);
+            ctx.save();
+            ctx.shadowColor = o.color;
+            ctx.shadowBlur = 10;
+            ctx.fillStyle = o.color + "33";
+            ctx.strokeStyle = o.color;
+            ctx.lineWidth = 1.5;
+            const ry = o.low ? oy + o.h / 2 - o.h : oy - o.h / 2;
+            ctx.beginPath();
+            ctx.rect(o.x - o.w / 2, ry, o.w, o.h);
+            ctx.fill();
+            ctx.stroke();
+            ctx.font = 'bold 9px "JetBrains Mono"';
+            ctx.fillStyle = o.color;
+            ctx.textAlign = "center";
+            ctx.fillText(o.label, o.x, ry + o.h / 2 + 3);
+            ctx.textAlign = "left";
+            ctx.restore();
+        }
+
+        for (const pt of state.particles) {
+            ctx.save();
+            ctx.globalAlpha = pt.life;
+            ctx.fillStyle = pt.color;
+            ctx.beginPath();
+            ctx.arc(pt.x, pt.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+        }
+
+        const p = state.player;
+        const pw = 22,
+            ph = p.sliding ? 14 : 30;
+        ctx.save();
+        ctx.shadowColor = "#00ff99";
+        ctx.shadowBlur = 16;
+        ctx.fillStyle = "#001a10";
+        ctx.strokeStyle = "#00ff99";
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.roundRect(p.x - pw / 2, p.y - ph / 2, pw, ph, 4);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.strokeStyle = "#00ff99";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(p.x - pw / 2 + 5, p.y - 5);
+        ctx.lineTo(p.x + pw / 2 - 5, p.y - 5);
+        ctx.moveTo(p.x - pw / 2 + 5, p.y);
+        ctx.lineTo(p.x + pw / 2 - 5, p.y);
+        ctx.moveTo(p.x - pw / 2 + 5, p.y + 5);
+        ctx.lineTo(p.x + pw / 2 - 5, p.y + 5);
+        ctx.stroke();
+
+        if (state.shield > 0) {
+            ctx.globalAlpha = 0.5;
+            ctx.strokeStyle = "#33aaff";
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 22, 0, Math.PI * 2);
+            ctx.stroke();
+        }
+        ctx.restore();
+
+        ctx.font = 'bold 13px "JetBrains Mono"';
+        ctx.fillStyle = "#00ff99";
+        ctx.fillText(`${state.score}`, 14, 22);
+        ctx.font = '10px "JetBrains Mono"';
+        ctx.fillStyle = "#3a6a4a";
+        ctx.fillText(`LVL ${state.level}`, 14, 38);
+
+        const spd = state.speed.toFixed(1);
+        ctx.fillStyle = "#1a4a2a";
+        ctx.font = '9px "JetBrains Mono"';
+        ctx.fillText(
+            `SPD:${spd}  DIST:${Math.floor(state.dist)}`,
+            W() - 130,
+            18,
+        );
+
+        ctx.restore();
+    }
+
+    const keys = new Set();
+    document.addEventListener("keydown", (e) => {
+        if (keys.has(e.code)) return;
+        keys.add(e.code);
+        if (!state.running) return;
+        const p = state.player;
+        if ((e.code === "ArrowUp" || e.code === "KeyW") && p.lane > 0) {
+            p.lane--;
+            if (!p.jumping) p.y = LANE_Y(p.lane + 1);
+            e.preventDefault();
+        }
+        if (
+            (e.code === "ArrowDown" || e.code === "KeyS") &&
+            p.lane < LANES - 1
+        ) {
+            p.lane++;
+            if (!p.jumping) p.y = LANE_Y(p.lane - 1);
+            e.preventDefault();
+        }
+        if (e.code === "Space" || e.code === "KeyZ") {
+            if (p.jumps < 2) {
+                p.vy = p.jumps === 0 ? -10 : -8;
+                p.jumping = true;
+                p.jumps++;
+                playSFX("jump", 0.5);
+            }
+            e.preventDefault();
+        }
+        if (e.code === "ArrowDown" || e.code === "KeyS") {
+            p.sliding = true;
+            p.slideTimer = 40;
+        }
+    });
+    document.addEventListener("keyup", (e) => {
+        keys.delete(e.code);
+    });
+
+    let audioCtx = null;
+
+    // ─── ElevenLabs Sound Effects Cache ──────────────────────────────
+    // API key is kept server-side in .env — never exposed to the client
+    const SFX_CACHE = {};
+
+    async function generateSFX(name, prompt, durationSecs = 1.5) {
+        try {
+            const res = await fetch("/api/sfx", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text: prompt,
+                    duration_seconds: durationSecs,
+                    prompt_influence: 0.3,
+                }),
+            });
+            if (!res.ok) return;
+            const blob = await res.blob();
+            SFX_CACHE[name] = URL.createObjectURL(blob);
+        } catch (e) {
+            /* silently fail — beep fallback still works */
+        }
+    }
+
+    function playSFX(name, vol = 0.6) {
+        if (SFX_CACHE[name]) {
+            const a = new Audio(SFX_CACHE[name]);
+            a.volume = vol;
+            a.play().catch(() => {});
+        }
+    }
+
+    async function preloadSFX() {
+        const statusEl = document.getElementById("cr-voice-status");
+        statusEl.className = "active";
+        statusEl.textContent = "◈ Loading ElevenLabs audio...";
+        // Generate 4 sound effects in parallel
+        await Promise.allSettled([
+            generateSFX(
+                "jump",
+                "quick whoosh air burst, sci-fi jump sound",
+                0.8,
+            ),
+            generateSFX(
+                "crash",
+                "electrical glitch crash explosion distortion",
+                1.2,
+            ),
+            generateSFX("pickup", "bright digital chime pickup collect", 0.6),
+            generateSFX(
+                "levelup",
+                "ascending electronic power-up synth sting",
+                1.0,
+            ),
+        ]);
+        statusEl.textContent = "◈ ElevenLabs Ready";
+        log("> ElevenLabs SFX loaded", "green");
+    }
+    // ──────────────────────────────────────────────────────────────────
+    function getAudioCtx() {
+        if (!audioCtx)
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        return audioCtx;
+    }
+
+    function beep(freq, dur, type = "sine", vol = 0.2) {
+        try {
+            const ac = getAudioCtx();
+            const osc = ac.createOscillator();
+            const gain = ac.createGain();
+            osc.connect(gain);
+            gain.connect(ac.destination);
+            osc.type = type;
+            osc.frequency.setValueAtTime(freq, ac.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(
+                freq * 0.5,
+                ac.currentTime + dur,
+            );
+            gain.gain.setValueAtTime(vol, ac.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + dur);
+            osc.start();
+            osc.stop(ac.currentTime + dur);
+        } catch (e) {}
+    }
+
+    async function speakVoice(text) {
+        // Auth handled server-side via proxy
+        const voiceId =
+            document.getElementById("cr-voice-id").value.trim() ||
+            "pNInz6obpgDQGcFmaJgB";
+        const vol = parseFloat(document.getElementById("cr-vol").value);
+        const statusEl = document.getElementById("cr-voice-status");
+
+        const now = Date.now();
+        if (now - state.lastVoice < 4000) return;
+        state.lastVoice = now;
+
+        statusEl.className = "active";
+        statusEl.textContent = "◈ Generating speech...";
+
+        try {
+            const res = await fetch(`/api/tts/${voiceId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    text,
+                    model_id: "eleven_turbo_v2",
+                    voice_settings: {
+                        stability: 0.4,
+                        similarity_boost: 0.75,
+                        style: 0.5,
+                    },
+                }),
+            });
+
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                statusEl.className = "error";
+                statusEl.textContent = `✗ ${err.detail?.message || res.status}`;
+                return;
+            }
+
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const audio = new Audio(url);
+            audio.volume = vol;
+            await audio.play();
+            statusEl.textContent = `▶ ${text.slice(0, 28)}...`;
+            audio.onended = () => {
+                statusEl.textContent = "◈ Ready";
+                statusEl.className = "";
+                URL.revokeObjectURL(url);
+            };
+        } catch (e) {
+            statusEl.className = "error";
+            statusEl.textContent = "✗ Network error";
+        }
+    }
+
+    function speakPickup(type) {
+        const lines = {
+            mem: [
+                "Memory absorbed.",
+                "Buffer captured.",
+                "Data fragment secured.",
+                "RAM injected. Running faster.",
+                "Neural cache expanded.",
+            ],
+            shield: [
+                "Shield matrix online.",
+                "Protection active.",
+                "Barrier engaged.",
+                "Force field up.",
+                "Armor initialized.",
+            ],
+            boost: [
+                "Zed overclock initiated.",
+                "Velocity spiked.",
+                "Speed daemon active.",
+                "Turbo mode engaged.",
+                "Zed acceleration: maximum.",
+            ],
+        };
+        const opts = lines[type] || ["Pickup collected."];
+        speakVoice(opts[Math.floor(Math.random() * opts.length)]);
+    }
+
+    async function testVoice() {
+        const old = document.getElementById("cr-voice-status").textContent;
+        await speakVoice("Code Runner. Zed AI and ElevenLabs, synchronized.");
+        if (!document.getElementById("cr-apikey").value.trim()) {
+            document.getElementById("cr-voice-status").textContent =
+                "✗ Enter API key first";
+            document.getElementById("cr-voice-status").className = "error";
+        }
+    }
+
+    function log(msg, cls = "") {
+        const el = document.getElementById("cr-log");
+        const div = document.createElement("div");
+        div.className = "log-line " + cls;
+        div.textContent = msg;
+        el.appendChild(div);
+        el.scrollTop = el.scrollHeight;
+        while (el.children.length > 30) el.removeChild(el.firstChild);
+    }
+
+    function clearLog() {
+        document.getElementById("cr-log").innerHTML = "";
+    }
+
+    draw();
+    // Auto-init ElevenLabs
+    window.addEventListener("DOMContentLoaded", () => {}, false);
+    preloadSFX();
 </script>
