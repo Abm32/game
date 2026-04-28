@@ -479,7 +479,6 @@
         frame: 0,
         gameOver: false,
         dist: 0,
-        lastVoice: 0,
         combo: 0,
         shield: 0,
         shaking: 0,
@@ -1264,23 +1263,48 @@
         } catch (e) {}
     }
 
-    async function speakVoice(text) {
-        // Auth handled server-side via proxy
+    // ── Voice Queue System ────────────────────────────────────────────
+    // priority 1 = high → jumps to front (game-over, new best, start)
+    // priority 0 = normal → queued up to 5 pending, oldest normal dropped beyond that
+    const VOICE_QUEUE = [];
+    let voiceIsPlaying = false;
+
+    function queueVoice(text, priority = 0) {
+        if (priority === 1) {
+            VOICE_QUEUE.unshift({ text, priority });
+        } else {
+            const normalCount = VOICE_QUEUE.filter(v => v.priority === 0).length;
+            if (normalCount >= 5) {
+                const idx = VOICE_QUEUE.findIndex(v => v.priority === 0);
+                if (idx !== -1) VOICE_QUEUE.splice(idx, 1);
+            }
+            VOICE_QUEUE.push({ text, priority });
+        }
+        if (!voiceIsPlaying) _processVoiceQueue();
+    }
+
+    function _processVoiceQueue() {
+        if (VOICE_QUEUE.length === 0) {
+            voiceIsPlaying = false;
+            return;
+        }
+        voiceIsPlaying = true;
+        const { text } = VOICE_QUEUE.shift();
+        _playVoiceLine(text).then(() => _processVoiceQueue());
+    }
+
+    function _playVoiceLine(text) {
         const voiceId =
             document.getElementById("cr-voice-id").value.trim() ||
             "pNInz6obpgDQGcFmaJgB";
         const vol = parseFloat(document.getElementById("cr-vol").value);
         const statusEl = document.getElementById("cr-voice-status");
 
-        const now = Date.now();
-        if (now - state.lastVoice < 4000) return;
-        state.lastVoice = now;
-
         statusEl.className = "active";
         statusEl.textContent = "◈ Generating speech...";
 
-        try {
-            const res = await fetch(`/api/tts/${voiceId}`, {
+        return new Promise((resolve) => {
+            fetch(`/api/tts/${voiceId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
@@ -1292,31 +1316,47 @@
                         style: 0.5,
                     },
                 }),
-            });
-
-            if (!res.ok) {
-                const err = await res.json().catch(() => ({}));
-                statusEl.className = "error";
-                statusEl.textContent = `✗ ${err.detail?.message || res.status}`;
-                return;
-            }
-
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            const audio = new Audio(url);
-            audio.volume = vol;
-            await audio.play();
-            statusEl.textContent = `▶ ${text.slice(0, 28)}...`;
-            audio.onended = () => {
-                statusEl.textContent = "◈ Ready";
-                statusEl.className = "";
-                URL.revokeObjectURL(url);
-            };
-        } catch (e) {
-            statusEl.className = "error";
-            statusEl.textContent = "✗ Network error";
-        }
+            })
+                .then((res) => {
+                    if (!res.ok) {
+                        return res
+                            .json()
+                            .catch(() => ({}))
+                            .then((err) => {
+                                statusEl.className = "error";
+                                statusEl.textContent = `✗ ${err.detail?.message || res.status}`;
+                                resolve();
+                            });
+                    }
+                    return res.blob().then((blob) => {
+                        const url = URL.createObjectURL(blob);
+                        const audio = new Audio(url);
+                        audio.volume = vol;
+                        audio.play().catch(() => resolve());
+                        statusEl.textContent = `▶ ${text.slice(0, 28)}...`;
+                        audio.onended = () => {
+                            statusEl.textContent = `◈ Ready (${VOICE_QUEUE.length} queued)`;
+                            statusEl.className =
+                                VOICE_QUEUE.length > 0 ? "active" : "";
+                            URL.revokeObjectURL(url);
+                            resolve();
+                        };
+                        audio.onerror = () => resolve();
+                    });
+                })
+                .catch(() => {
+                    statusEl.className = "error";
+                    statusEl.textContent = "✗ Network error";
+                    resolve();
+                });
+        });
     }
+
+    // speakVoice — thin public wrapper; priority: 1=high, 0=normal
+    function speakVoice(text, priority = 0) {
+        queueVoice(text, priority);
+    }
+    // ─────────────────────────────────────────────────────────────────
 
     function speakPickup(type) {
         const lines = {
