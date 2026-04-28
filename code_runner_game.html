@@ -7,15 +7,23 @@
         padding: 0;
     }
 
+    html, body {
+        height: 100%;
+        width: 100%;
+        overflow: hidden;
+        background: #0a0e14;
+    }
+
     #cr-root {
         font-family: "JetBrains Mono", monospace;
         background: #0a0e14;
         color: #e6f0ff;
-        min-height: 600px;
-        border-radius: 12px;
+        height: 100dvh;
         overflow: hidden;
         position: relative;
         user-select: none;
+        display: flex;
+        flex-direction: column;
     }
 
     #cr-scanlines {
@@ -63,7 +71,8 @@
     /* GAME CANVAS AREA */
     #cr-canvas-wrap {
         position: relative;
-        height: 320px;
+        flex: 1;
+        min-height: 200px;
         overflow: hidden;
         background: #0a0e14;
         cursor: none;
