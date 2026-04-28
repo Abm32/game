@@ -6,12 +6,12 @@ const path = require("path");
 const app = express();
 app.use(express.json());
 
-// Serve the game HTML as a static file
-app.use(express.static(path.join(__dirname)));
+// Serve frontend assets from the public directory
+app.use(express.static(path.join(__dirname, "public")));
 
-// Root route — serve the game directly at http://localhost:3001
+// Root route — serve the main game app directly
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "code_runner_game.html"));
+  res.sendFile(path.join(__dirname, "public", "index.html"));
 });
 
 const API_KEY = process.env.ELEVENLABS_API_KEY;
