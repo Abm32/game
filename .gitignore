@@ -7,3 +7,6 @@ node_modules/
 # OS junk
 .DS_Store
 Thumbs.db
+
+# Video workspace (temporary)
+video/
