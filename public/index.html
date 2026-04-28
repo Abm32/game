@@ -1,3 +1,11 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>⬡ CODE RUNNER</title>
+</head>
+<body style="margin:0;background:#0a0e14;overflow:hidden;overscroll-behavior:none;touch-action:none;">
 <style>
     @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Orbitron:wght@700;900&display=swap");
 
@@ -11,11 +19,12 @@
         font-family: "JetBrains Mono", monospace;
         background: #0a0e14;
         color: #e6f0ff;
-        min-height: 600px;
-        border-radius: 12px;
+        min-height: 100dvh;
         overflow: hidden;
         position: relative;
         user-select: none;
+        display: flex;
+        flex-direction: column;
     }
 
     #cr-scanlines {
@@ -63,10 +72,10 @@
     /* GAME CANVAS AREA */
     #cr-canvas-wrap {
         position: relative;
-        height: 320px;
+        flex: 1;
+        min-height: 200px;
         overflow: hidden;
         background: #0a0e14;
-        cursor: none;
     }
     canvas#cr-canvas {
         display: block;
@@ -79,7 +88,8 @@
         display: flex;
         gap: 0;
         border-top: 1px solid #1a2a1a;
-        height: 200px;
+        height: 160px;
+        flex-shrink: 0;
     }
 
     /* TERMINAL LOG */
@@ -334,6 +344,63 @@
     }
     #cr-play-btn:hover {
         box-shadow: 0 0 20px #00ff9966;
+    }
+
+    /* ── Mobile Responsive ─────────────────────────────────────── */
+    @media (max-width: 600px) {
+        #cr-header {
+            padding: 8px 12px 6px;
+        }
+        #cr-title {
+            font-size: 12px;
+            letter-spacing: 2px;
+        }
+        #cr-header-stats {
+            font-size: 9px;
+            gap: 8px;
+        }
+        #cr-bottom {
+            flex-direction: column;
+            height: auto;
+            max-height: 140px;
+        }
+        #cr-log {
+            border-right: none;
+            border-bottom: 1px solid #1a2a1a;
+            max-height: 70px;
+            padding: 6px 10px;
+            font-size: 10px;
+        }
+        #cr-voice {
+            width: 100%;
+            flex-direction: row;
+            flex-wrap: wrap;
+            padding: 8px 10px;
+            gap: 6px;
+            align-items: center;
+        }
+        #cr-voice-label { display: none; }
+        #cr-voice-status { font-size: 9px; min-height: auto; flex: 1; }
+        #cr-vol-wrap { flex: 1; min-width: 100px; }
+        #cr-music-wrap { flex: 0; }
+        #cr-controls {
+            flex-wrap: wrap;
+            padding: 6px 10px;
+            gap: 6px;
+            font-size: 9px;
+        }
+        #cr-controls .hint { gap: 4px; }
+        .kbd { font-size: 8px; padding: 1px 4px; min-width: 18px; }
+        #cr-overlay-title { font-size: 20px; letter-spacing: 2px; }
+        #cr-overlay-sub { font-size: 11px; max-width: 280px; letter-spacing: 1px; padding: 0 16px; }
+        #cr-overlay-score { font-size: 16px; }
+        #cr-play-btn { font-size: 11px; padding: 10px 24px; }
+    }
+
+    @media (max-height: 500px) {
+        #cr-bottom { max-height: 100px; }
+        #cr-log { max-height: 50px; }
+        #cr-controls { display: none; }
     }
 </style>
 
@@ -1443,3 +1510,5 @@
     preloadSFX();
     initMusic();
 </script>
+</body>
+</html>
