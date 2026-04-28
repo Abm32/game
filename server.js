@@ -78,7 +78,7 @@ app.post("/api/sfx", async (req, res) => {
 app.post("/api/music", async (req, res) => {
   if (!API_KEY) return missingKey(res);
   try {
-    const upstream = await fetch("https://api.elevenlabs.io/v1/music", {
+    const upstream = await fetch("https://api.elevenlabs.io/v1/music/stream", {
       method: "POST",
       headers: {
         "xi-api-key": API_KEY,
