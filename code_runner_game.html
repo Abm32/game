@@ -214,6 +214,41 @@
         font-size: 10px;
         color: #3a6a4a;
     }
+    #cr-music-wrap {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 10px;
+        color: #3a6a4a;
+    }
+    #cr-music-btn {
+        background: transparent;
+        border: 1px solid #3a6a4a;
+        color: #3a6a4a;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 9px;
+        padding: 3px 6px;
+        border-radius: 3px;
+        cursor: pointer;
+        letter-spacing: 1px;
+        transition: all 0.15s;
+    }
+    #cr-music-btn:hover {
+        border-color: #00cc77;
+        color: #00cc77;
+    }
+    #cr-music-btn.active {
+        border-color: #00ff99;
+        color: #00ff99;
+    }
+    #cr-music-status {
+        font-size: 9px;
+        color: #3a5a3a;
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
     #cr-vol {
         flex: 1;
         accent-color: #00cc77;
@@ -375,6 +410,12 @@
                     step="0.05"
                     value="0.8"
                 />
+            </div>
+            <div id="cr-music-wrap">
+                <button id="cr-music-btn" onclick="toggleMusic()">
+                    &#9835; MUSIC
+                </button>
+                <span id="cr-music-status">&#9672; Generating...</span>
             </div>
         </div>
     </div>
@@ -630,6 +671,7 @@
             "Code Runner started. Survive the syntax.",
         ];
         speakVoice(startLines[Math.floor(Math.random() * startLines.length)]);
+        if (!MUSIC.muted) updateMusicForLevel(1);
     }
 
     function gameLoop() {
@@ -651,6 +693,7 @@
             state.speed = 3.5 + (state.level - 1) * 0.7;
             log(`> Level ${state.level} — speed++`, "yellow");
             playSFX("levelup", 0.7);
+            updateMusicForLevel(state.level);
             speakVoice(`Level ${state.level}. Increasing velocity.`);
         }
 
@@ -780,6 +823,7 @@
     function endGame() {
         state.gameOver = true;
         state.running = false;
+        stopMusic();
         const isNewBest = state.score > state.best;
         if (isNewBest) {
             state.best = state.score;
@@ -1035,6 +1079,138 @@
         }
     }
 
+    // ─── ElevenLabs Music Engine ───────────────────────────────────────────────────
+    const MUSIC = {
+        chillUrl: null, // blob URL for levels 1–2
+        intenseUrl: null, // blob URL for levels 3+
+        current: null, // currently playing Audio object
+        muted: false,
+        generating: false,
+        activeTrack: null, // 'chill' | 'intense' | null
+    };
+
+    async function generateMusicTrack(prompt, lengthMs) {
+        try {
+            const res = await fetch("/api/music", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    prompt,
+                    music_length_ms: lengthMs,
+                    model_id: "music_v1",
+                    force_instrumental: true,
+                }),
+            });
+            if (!res.ok) return null;
+            const blob = await res.blob();
+            return URL.createObjectURL(blob);
+        } catch (e) {
+            return null;
+        }
+    }
+
+    async function initMusic() {
+        const mStatus = document.getElementById("cr-music-status");
+        MUSIC.generating = true;
+        mStatus.textContent = "\u25c8 Composing tracks...";
+
+        // Generate both tracks in parallel
+        const [chillUrl, intenseUrl] = await Promise.all([
+            generateMusicTrack(
+                "Dark cyberpunk ambient electronic music, slow mysterious pulsing synths, hacker terminal vibes, low tension, loopable, instrumental",
+                90000,
+            ),
+            generateMusicTrack(
+                "Intense cyberpunk electronic music, fast aggressive synths, adrenaline neon city escape chase, high energy, driving beat, loopable, instrumental",
+                90000,
+            ),
+        ]);
+
+        MUSIC.chillUrl = chillUrl;
+        MUSIC.intenseUrl = intenseUrl;
+        MUSIC.generating = false;
+
+        if (chillUrl || intenseUrl) {
+            mStatus.textContent = "\u25c8 Music ready \u266b";
+            document.getElementById("cr-music-btn").classList.add("active");
+            log("> ElevenLabs music generated", "green");
+        } else {
+            mStatus.textContent = "\u2717 Music unavailable";
+        }
+    }
+
+    function playMusicTrack(url, trackName) {
+        if (!url || MUSIC.muted) return;
+        if (MUSIC.current) {
+            MUSIC.current.pause();
+            MUSIC.current.src = "";
+        }
+        const audio = new Audio(url);
+        audio.loop = true;
+        audio.volume = 0;
+        audio.play().catch(() => {});
+        // Fade in over 1.5s
+        const vol = parseFloat(document.getElementById("cr-vol").value) * 0.4;
+        let v = 0;
+        const fadeIn = setInterval(() => {
+            v = Math.min(v + 0.02, vol);
+            audio.volume = v;
+            if (v >= vol) clearInterval(fadeIn);
+        }, 40);
+        MUSIC.current = audio;
+        MUSIC.activeTrack = trackName;
+    }
+
+    function stopMusic(fade = true) {
+        if (!MUSIC.current) return;
+        if (!fade) {
+            MUSIC.current.pause();
+            MUSIC.current = null;
+            MUSIC.activeTrack = null;
+            return;
+        }
+        const audio = MUSIC.current;
+        MUSIC.current = null;
+        MUSIC.activeTrack = null;
+        let v = audio.volume;
+        const fadeOut = setInterval(() => {
+            v = Math.max(v - 0.03, 0);
+            audio.volume = v;
+            if (v <= 0) {
+                clearInterval(fadeOut);
+                audio.pause();
+            }
+        }, 40);
+    }
+
+    function updateMusicForLevel(level) {
+        if (MUSIC.muted) return;
+        const wantIntense = level >= 3;
+        const wantTrack = wantIntense ? "intense" : "chill";
+        if (MUSIC.activeTrack === wantTrack) return; // already playing right track
+        const url = wantIntense ? MUSIC.intenseUrl : MUSIC.chillUrl;
+        if (url) playMusicTrack(url, wantTrack);
+    }
+
+    function toggleMusic() {
+        const btn = document.getElementById("cr-music-btn");
+        const mStatus = document.getElementById("cr-music-status");
+        MUSIC.muted = !MUSIC.muted;
+        if (MUSIC.muted) {
+            stopMusic(true);
+            btn.classList.remove("active");
+            mStatus.textContent = "\u25c8 Music muted";
+        } else {
+            btn.classList.add("active");
+            mStatus.textContent = "\u25c8 Music on \u266b";
+            // Resume appropriate track if game is running
+            if (state.running) {
+                updateMusicForLevel(state.level);
+            }
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     async function preloadSFX() {
         const statusEl = document.getElementById("cr-voice-status");
         statusEl.className = "active";
@@ -1198,4 +1374,5 @@
     // Auto-init ElevenLabs
     window.addEventListener("DOMContentLoaded", () => {}, false);
     preloadSFX();
+    initMusic();
 </script>
