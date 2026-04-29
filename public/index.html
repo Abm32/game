@@ -1137,24 +1137,33 @@
     });
 
     // ── Touch Controls ───────────────────────────────────────────────
-    let touchStartX = 0, touchStartY = 0;
+    let touchStartY = 0, touchSwiped = false, touchLaneBase = 0;
     canvas.addEventListener("touchstart", (e) => {
         e.preventDefault();
         const t = e.touches[0];
-        touchStartX = t.clientX;
         touchStartY = t.clientY;
+        touchSwiped = false;
+        touchLaneBase = state.player.lane;
+    }, { passive: false });
+    canvas.addEventListener("touchmove", (e) => {
+        e.preventDefault();
+        if (!state.running) return;
+        const t = e.touches[0];
+        const dy = t.clientY - touchStartY;
+        const threshold = 30;
+        const laneShift = Math.round(dy / threshold);
+        const newLane = Math.max(0, Math.min(LANES - 1, touchLaneBase + laneShift));
+        if (newLane !== state.player.lane) {
+            if (!state.player.jumping) state.player.y = LANE_Y(state.player.lane);
+            state.player.lane = newLane;
+            touchSwiped = true;
+        }
     }, { passive: false });
     canvas.addEventListener("touchend", (e) => {
         e.preventDefault();
         if (!state.running) return;
-        const t = e.changedTouches[0];
-        const dx = t.clientX - touchStartX;
-        const dy = t.clientY - touchStartY;
-        const p = state.player;
-        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 30) {
-            if (dy < 0 && p.lane > 0) p.lane--;
-            else if (dy > 0 && p.lane < LANES - 1) { p.lane++; p.sliding = true; p.slideTimer = 40; }
-        } else if (Math.abs(dx) < 15 && Math.abs(dy) < 15) {
+        if (!touchSwiped) {
+            const p = state.player;
             if (p.jumps < 2) { p.vy = p.jumps === 0 ? -10 : -8; p.jumping = true; p.jumps++; playSFX("jump", 0.5); }
         }
     }, { passive: false });
